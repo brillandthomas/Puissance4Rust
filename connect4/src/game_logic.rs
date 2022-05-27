@@ -4,7 +4,7 @@ const BOARD_WIDTH: usize = 7;
 const BOARD_HEIGHT: usize = 6;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-enum Player {
+pub enum Player {
     Red,
     Yellow,
 }
@@ -20,11 +20,21 @@ impl Player {
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-enum Cell {
+pub enum Cell {
     Empty,
     Red,
     Yellow,
 }
+
+impl Cell {
+    fn is_empty(self) -> bool {
+        match self {
+            Cell::Empty => true,
+            _ => false,
+        }
+    } 
+}
+
 
 impl Into<Cell> for Player {
     fn into(self) -> Cell {
@@ -35,8 +45,18 @@ impl Into<Cell> for Player {
     }
 }
 
+impl Into<char> for Cell {
+    fn into(self) -> char {
+        match self {
+            Cell::Empty => ' ',
+            Cell::Red => 'X',
+            Cell::Yellow => 'O',
+        }
+    }
+} 
+
 #[derive(Clone, Debug, Eq, PartialEq)]
-struct Connect4 {
+pub struct Connect4 {
     board: [Cell; BOARD_WIDTH * BOARD_HEIGHT],
     columns_height: [usize; BOARD_WIDTH],
     to_play: Player,
@@ -141,12 +161,30 @@ impl Connect4 {
         let descending_diagonal_winner =
             self.check_winner_list(other_player, descending_diagonal_list);
 
-        (row_winner | column_winner | ascending_diagonal_winner | descending_diagonal_winner)
+        row_winner | column_winner | ascending_diagonal_winner | descending_diagonal_winner
+    }
+
+    fn check_draw(&self) -> bool {
+        for column in 0..BOARD_WIDTH {
+            if self.columns_height[column] < BOARD_HEIGHT {
+                return false;
+            }
+        }
+        true
     }
 
     fn valid_action(&self, column: usize) -> bool {
         (column < BOARD_WIDTH) & (self.columns_height[column] < BOARD_HEIGHT)
     }
+}
+
+pub fn init_connect4() -> Connect4 {
+    let new_connect4 = Connect4 {
+        board : [Cell::Empty; BOARD_HEIGHT*BOARD_WIDTH],
+        columns_height : [0; BOARD_WIDTH],
+        to_play : Player::Red,
+    };
+    new_connect4
 }
 
 impl Index<(usize, usize)> for Connect4 {
@@ -164,5 +202,26 @@ impl IndexMut<(usize, usize)> for Connect4 {
         Self::check_coordinates(row, column);
         let index = BOARD_WIDTH * row + column;
         unsafe { self.board.get_unchecked_mut(index) }
+    }
+}
+
+use std::fmt;
+
+impl fmt::Display for Connect4 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+        let mut board_vec: Vec<char> = Vec::new();
+        for row_number in (0..BOARD_HEIGHT).rev() {
+            for column_number in 0..(BOARD_WIDTH) {
+                board_vec.push('|');
+                board_vec.push(self[(row_number, column_number)].into());
+                board_vec.push('|');
+            }
+            board_vec.push('\n')
+        }
+        
+        let board_print : String = board_vec.iter().collect(); 
+
+        write!(f, "{}", board_print)
     }
 }
