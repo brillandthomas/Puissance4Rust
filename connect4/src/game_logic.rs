@@ -1,7 +1,8 @@
 use std::ops::{Index, IndexMut};
+use rand::Rng;
 
-const BOARD_WIDTH: usize = 7;
-const BOARD_HEIGHT: usize = 6;
+pub const BOARD_WIDTH: usize = 7;
+pub const BOARD_HEIGHT: usize = 6;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Player {
@@ -197,6 +198,17 @@ impl Connect4 {
         self.to_play = self.to_play.other();
         self.columns_height[column] = self.columns_height[column] + 1;
         self.last_move = (row_move, column);
+    }
+
+    pub fn play_random_move(&mut self) -> () {
+        let mut possible_moves : Vec<usize> = Vec::new();
+        for column in 0..BOARD_WIDTH {
+            if self.columns_height[column] < BOARD_HEIGHT {
+                possible_moves.push(column);
+            }
+        }
+        let chosen_index = rand::thread_rng().gen_range(0..possible_moves.len());
+        self.play_move(possible_moves[chosen_index]);
     }
 }
 
