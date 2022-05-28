@@ -60,6 +60,7 @@ pub struct Connect4 {
     board: [Cell; BOARD_WIDTH * BOARD_HEIGHT],
     columns_height: [usize; BOARD_WIDTH],
     to_play: Player,
+    last_move: (usize, usize),
 }
 
 impl Connect4 {
@@ -144,8 +145,9 @@ impl Connect4 {
         false
     }
 
-    pub fn check_winner(&self, (row, column): (usize, usize)) -> bool {
+    pub fn check_winner(&self) -> bool {
         let other_player: Player = self.to_play.other();
+        let (row,column): (usize, usize) = self.last_move;
 
         let row_list = self.get_row(row);
         let row_winner = self.check_winner_list(other_player, row_list);
@@ -185,19 +187,16 @@ impl Connect4 {
         true
     }
 
-    fn valid_action(&self, column: usize) -> bool {
+    pub fn valid_action(&self, column: usize) -> bool {
         (column < BOARD_WIDTH) & (self.columns_height[column] < BOARD_HEIGHT)
     }
 
-    pub fn play_move(&mut self, column: usize) -> (usize, usize) {
-        if self.valid_action(column) {
-            let row_move = self.columns_height[column];
-            self[(row_move, column)] = self.to_play.into();
-            self.to_play = self.to_play.other();
-            self.columns_height[column] = self.columns_height[column] + 1;
-            return (row_move, column)
-        }
-        (10,10)
+    pub fn play_move(&mut self, column: usize) -> () {
+        let row_move = self.columns_height[column];
+        self[(row_move, column)] = self.to_play.into();
+        self.to_play = self.to_play.other();
+        self.columns_height[column] = self.columns_height[column] + 1;
+        self.last_move = (row_move, column);
     }
 }
 
@@ -206,6 +205,7 @@ pub fn init_connect4() -> Connect4 {
         board : [Cell::Empty; BOARD_HEIGHT*BOARD_WIDTH],
         columns_height : [0; BOARD_WIDTH],
         to_play : Player::Red,
+        last_move : (10,10),
     };
     new_connect4
 }
