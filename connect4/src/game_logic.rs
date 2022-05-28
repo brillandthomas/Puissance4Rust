@@ -101,7 +101,7 @@ impl Connect4 {
             i = i - 1;
             j = j - 1;
         }
-        while (i < BOARD_WIDTH) & (j < BOARD_HEIGHT) {
+        while (i < BOARD_HEIGHT) & (j < BOARD_WIDTH) {
             diagonal_output[ind] = self[(i, j)];
             ind = ind + 1;
             i = i + 1;
@@ -144,27 +144,39 @@ impl Connect4 {
         false
     }
 
-    fn check_winner(&self, (row, column): (usize, usize)) -> bool {
+    pub fn check_winner(&self, (row, column): (usize, usize)) -> bool {
         let other_player: Player = self.to_play.other();
 
         let row_list = self.get_row(row);
         let row_winner = self.check_winner_list(other_player, row_list);
+        if row_winner {
+            return true;
+        }
 
         let column_list = self.get_column(column);
         let column_winner = self.check_winner_list(other_player, column_list);
+        if column_winner {
+            return true;
+        }
 
         let ascending_diagonal_list = self.get_ascending_diagonal((row, column));
         let ascending_diagonal_winner =
             self.check_winner_list(other_player, ascending_diagonal_list);
+        if ascending_diagonal_winner {
+            return true;
+        }
 
         let descending_diagonal_list = self.get_descending_diagonal((row, column));
         let descending_diagonal_winner =
             self.check_winner_list(other_player, descending_diagonal_list);
+        if descending_diagonal_winner {
+            return true;
+        }
 
-        row_winner | column_winner | ascending_diagonal_winner | descending_diagonal_winner
+        false
     }
 
-    fn check_draw(&self) -> bool {
+    pub fn check_draw(&self) -> bool {
         for column in 0..BOARD_WIDTH {
             if self.columns_height[column] < BOARD_HEIGHT {
                 return false;
@@ -175,6 +187,17 @@ impl Connect4 {
 
     fn valid_action(&self, column: usize) -> bool {
         (column < BOARD_WIDTH) & (self.columns_height[column] < BOARD_HEIGHT)
+    }
+
+    pub fn play_move(&mut self, column: usize) -> (usize, usize) {
+        if self.valid_action(column) {
+            let row_move = self.columns_height[column];
+            self[(row_move, column)] = self.to_play.into();
+            self.to_play = self.to_play.other();
+            self.columns_height[column] = self.columns_height[column] + 1;
+            return (row_move, column)
+        }
+        (10,10)
     }
 }
 
