@@ -4,7 +4,7 @@ const BOARD_WIDTH: usize = 7;
 const BOARD_HEIGHT: usize = 6;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-enum Player {
+pub enum Player {
     Red,
     Yellow,
 }
@@ -20,11 +20,21 @@ impl Player {
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-enum Cell {
+pub enum Cell {
     Empty,
     Red,
     Yellow,
 }
+
+impl Cell {
+    fn is_empty(self) -> bool {
+        match self {
+            Cell::Empty => true,
+            _ => false,
+        }
+    } 
+}
+
 
 impl Into<Cell> for Player {
     fn into(self) -> Cell {
@@ -35,8 +45,18 @@ impl Into<Cell> for Player {
     }
 }
 
+impl Into<char> for Cell {
+    fn into(self) -> char {
+        match self {
+            Cell::Empty => ' ',
+            Cell::Red => 'X',
+            Cell::Yellow => 'O',
+        }
+    }
+} 
+
 #[derive(Clone, Debug, Eq, PartialEq)]
-struct Connect4 {
+pub struct Connect4 {
     board: [Cell; BOARD_WIDTH * BOARD_HEIGHT],
     columns_height: [usize; BOARD_WIDTH],
     to_play: Player,
@@ -81,7 +101,7 @@ impl Connect4 {
             i = i - 1;
             j = j - 1;
         }
-        while (i < BOARD_WIDTH) & (j < BOARD_HEIGHT) {
+        while (i < BOARD_HEIGHT) & (j < BOARD_WIDTH) {
             diagonal_output[ind] = self[(i, j)];
             ind = ind + 1;
             i = i + 1;
@@ -124,29 +144,70 @@ impl Connect4 {
         false
     }
 
-    fn check_winner(&self, (row, column): (usize, usize)) -> bool {
+    pub fn check_winner(&self, (row, column): (usize, usize)) -> bool {
         let other_player: Player = self.to_play.other();
 
         let row_list = self.get_row(row);
         let row_winner = self.check_winner_list(other_player, row_list);
+        if row_winner {
+            return true;
+        }
 
         let column_list = self.get_column(column);
         let column_winner = self.check_winner_list(other_player, column_list);
+        if column_winner {
+            return true;
+        }
 
         let ascending_diagonal_list = self.get_ascending_diagonal((row, column));
         let ascending_diagonal_winner =
             self.check_winner_list(other_player, ascending_diagonal_list);
+        if ascending_diagonal_winner {
+            return true;
+        }
 
         let descending_diagonal_list = self.get_descending_diagonal((row, column));
         let descending_diagonal_winner =
             self.check_winner_list(other_player, descending_diagonal_list);
+        if descending_diagonal_winner {
+            return true;
+        }
 
-        (row_winner | column_winner | ascending_diagonal_winner | descending_diagonal_winner)
+        false
+    }
+
+    pub fn check_draw(&self) -> bool {
+        for column in 0..BOARD_WIDTH {
+            if self.columns_height[column] < BOARD_HEIGHT {
+                return false;
+            }
+        }
+        true
     }
 
     fn valid_action(&self, column: usize) -> bool {
         (column < BOARD_WIDTH) & (self.columns_height[column] < BOARD_HEIGHT)
     }
+
+    pub fn play_move(&mut self, column: usize) -> (usize, usize) {
+        if self.valid_action(column) {
+            let row_move = self.columns_height[column];
+            self[(row_move, column)] = self.to_play.into();
+            self.to_play = self.to_play.other();
+            self.columns_height[column] = self.columns_height[column] + 1;
+            return (row_move, column)
+        }
+        (10,10)
+    }
+}
+
+pub fn init_connect4() -> Connect4 {
+    let new_connect4 = Connect4 {
+        board : [Cell::Empty; BOARD_HEIGHT*BOARD_WIDTH],
+        columns_height : [0; BOARD_WIDTH],
+        to_play : Player::Red,
+    };
+    new_connect4
 }
 
 impl Index<(usize, usize)> for Connect4 {
@@ -164,5 +225,26 @@ impl IndexMut<(usize, usize)> for Connect4 {
         Self::check_coordinates(row, column);
         let index = BOARD_WIDTH * row + column;
         unsafe { self.board.get_unchecked_mut(index) }
+    }
+}
+
+use std::fmt;
+
+impl fmt::Display for Connect4 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
+        let mut board_vec: Vec<char> = Vec::new();
+        for row_number in (0..BOARD_HEIGHT).rev() {
+            for column_number in 0..(BOARD_WIDTH) {
+                board_vec.push('|');
+                board_vec.push(self[(row_number, column_number)].into());
+                board_vec.push('|');
+            }
+            board_vec.push('\n')
+        }
+        
+        let board_print : String = board_vec.iter().collect(); 
+
+        write!(f, "{}", board_print)
     }
 }
