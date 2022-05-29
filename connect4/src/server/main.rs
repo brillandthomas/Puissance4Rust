@@ -1,6 +1,11 @@
 use clap::{Arg, Command};
 use connect4::server;
 
+fn main() {
+    let socket_address = parse_args();
+    server::run(socket_address);
+}
+
 fn cli() -> Command<'static> {
     Command::new("Connnect4 Server")
         .author("Romain Ageron & Thomas Brilland")
@@ -38,9 +43,4 @@ fn parse_args() -> (String, u16) {
         .parse()
         .expect("Unvalid value for port. It should be an integer between 0 and 65,535.");
     (ip, port)
-}
-
-fn main() {
-    let socket_address = parse_args();
-    server::run(socket_address);
 }
