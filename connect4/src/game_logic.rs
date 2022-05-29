@@ -1,5 +1,7 @@
-use std::ops::{Index, IndexMut};
 use rand::Rng;
+use std::char;
+use std::fs;
+use std::ops::{Index, IndexMut};
 
 pub const BOARD_WIDTH: usize = 7;
 pub const BOARD_HEIGHT: usize = 6;
@@ -33,9 +35,8 @@ impl Cell {
             Cell::Empty => true,
             _ => false,
         }
-    } 
+    }
 }
-
 
 impl Into<Cell> for Player {
     fn into(self) -> Cell {
@@ -54,7 +55,7 @@ impl Into<char> for Cell {
             Cell::Yellow => 'O',
         }
     }
-} 
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Connect4 {
@@ -62,6 +63,7 @@ pub struct Connect4 {
     columns_height: [usize; BOARD_WIDTH],
     to_play: Player,
     last_move: (usize, usize),
+    played_moves: Vec<usize>,
 }
 
 impl Connect4 {
@@ -148,7 +150,7 @@ impl Connect4 {
 
     pub fn check_winner(&self) -> bool {
         let other_player: Player = self.to_play.other();
-        let (row,column): (usize, usize) = self.last_move;
+        let (row, column): (usize, usize) = self.last_move;
 
         let row_list = self.get_row(row);
         let row_winner = self.check_winner_list(other_player, row_list);
@@ -198,10 +200,11 @@ impl Connect4 {
         self.to_play = self.to_play.other();
         self.columns_height[column] = self.columns_height[column] + 1;
         self.last_move = (row_move, column);
+        self.played_moves.push(column);
     }
 
     pub fn play_random_move(&mut self) -> () {
-        let mut possible_moves : Vec<usize> = Vec::new();
+        let mut possible_moves: Vec<usize> = Vec::new();
         for column in 0..BOARD_WIDTH {
             if self.columns_height[column] < BOARD_HEIGHT {
                 possible_moves.push(column);
@@ -210,14 +213,41 @@ impl Connect4 {
         let chosen_index = rand::thread_rng().gen_range(0..possible_moves.len());
         self.play_move(possible_moves[chosen_index]);
     }
+
+    pub fn save_moves(&self, red_player: String, yellow_player: String) -> () {
+        let mut red_moves: Vec<char> = Vec::new();
+        let mut yellow_moves: Vec<char> = Vec::new();
+
+        for ind in 0..self.played_moves.len() {
+            let c = char::from_digit(self.played_moves[ind] as u32, 10).unwrap();
+            if ind % 2 == 0 {
+                red_moves.push(c);
+                red_moves.push(';');
+            } else {
+                yellow_moves.push(c);
+                yellow_moves.push(';')
+            }
+        }
+
+        let yellow_string: String = yellow_moves.iter().collect();
+        let red_string: String = red_moves.iter().collect();
+
+        let total_string: String = format!(
+            "{} moves (X): {} \n{} moves (O): {}\n\nFinal board :\n{}",
+            red_player, red_string, yellow_player, yellow_string, &self
+        );
+
+        fs::write("output.txt", total_string).expect("Unable to write data");
+    }
 }
 
 pub fn init_connect4() -> Connect4 {
     let new_connect4 = Connect4 {
-        board : [Cell::Empty; BOARD_HEIGHT*BOARD_WIDTH],
-        columns_height : [0; BOARD_WIDTH],
-        to_play : Player::Red,
-        last_move : (10,10),
+        board: [Cell::Empty; BOARD_HEIGHT * BOARD_WIDTH],
+        columns_height: [0; BOARD_WIDTH],
+        to_play: Player::Red,
+        last_move: (10, 10),
+        played_moves: Vec::new(),
     };
     new_connect4
 }
@@ -243,8 +273,7 @@ impl IndexMut<(usize, usize)> for Connect4 {
 use std::fmt;
 
 impl fmt::Display for Connect4 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
-    {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut board_vec: Vec<char> = Vec::new();
         for row_number in (0..BOARD_HEIGHT).rev() {
             for column_number in 0..(BOARD_WIDTH) {
@@ -254,8 +283,8 @@ impl fmt::Display for Connect4 {
             }
             board_vec.push('\n')
         }
-        
-        let board_print : String = board_vec.iter().collect(); 
+
+        let board_print: String = board_vec.iter().collect();
 
         write!(f, "{}", board_print)
     }
