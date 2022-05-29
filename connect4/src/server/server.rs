@@ -48,6 +48,7 @@ fn play_game(mut player_1: TcpStream, mut player_2: TcpStream) {
 
 fn play_turn(game: &mut Connect4, player_1: &mut TcpStream, player_2: &mut TcpStream) {
     let (player, other) = game.to_play.select(player_1, player_2);
+    Play.send_to(player);
     let action = match Message::receive_from(player) {
         Action(action) if game.valid_action(action as usize) => action,
         _ => {

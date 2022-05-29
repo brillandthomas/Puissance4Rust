@@ -26,7 +26,8 @@ fn cli() -> Command<'static> {
                 .help("Port on which the server is listening"),
         )
         .after_help(
-            "Play either locally against an AI or online against someone else. The state of the game is maintained on the server side, not on the client side.",
+            "Play either locally against an AI or online against someone else. The state of the \
+            game is maintained on the server side, not on the client side.",
         )
 }
 

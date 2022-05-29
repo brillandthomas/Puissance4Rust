@@ -31,6 +31,22 @@ impl Player {
     }
 }
 
+impl From<Player> for char {
+    fn from(player: Player) -> Self {
+        Cell::from(player).into()
+    }
+}
+
+impl fmt::Display for Player {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Player::*;
+        match self {
+            Red => write!(f, "red"),
+            Yellow => write!(f, "yellow"),
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Cell {
     Empty,
@@ -38,18 +54,18 @@ pub enum Cell {
     Yellow,
 }
 
-impl Into<Cell> for Player {
-    fn into(self) -> Cell {
-        match self {
+impl From<Player> for Cell {
+    fn from(player: Player) -> Self {
+        match player {
             Player::Red => Cell::Red,
             Player::Yellow => Cell::Yellow,
         }
     }
 }
 
-impl Into<char> for Cell {
-    fn into(self) -> char {
-        match self {
+impl From<Cell> for char {
+    fn from(cell: Cell) -> Self {
+        match cell {
             Cell::Empty => ' ',
             Cell::Red => 'X',
             Cell::Yellow => 'O',
