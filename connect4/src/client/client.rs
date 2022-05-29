@@ -24,7 +24,7 @@ fn game_over(result: Message) {
 
 fn input_action(server: &mut TcpStream) {
     loop {
-        print!("\nPlease input your move:\t");
+        println!("\nPlease input your move:");
         let mut action = String::new();
         io::stdin()
             .read_line(&mut action)
@@ -42,10 +42,11 @@ fn play_game(mut server: TcpStream, color: Player) {
     let mut game = Connect4::new();
     println!(
         "You are playing with {} (symbol: {}).\n Columns are numbered from 0 to {} inclusive, \
-            starting from the left.\n",
+            starting from the left.\n\n{}\n\n",
         color,
         char::from(color),
-        game_logic::BOARD_WIDTH - 1
+        game_logic::BOARD_WIDTH - 1,
+        game,
     );
 
     loop {

@@ -127,11 +127,11 @@ impl Connect4 {
     }
 
     pub fn over(&self) -> bool {
-        matches!(self.check_winner(), Some(_))
-            | self
-                .columns_height
-                .iter()
-                .all(|&height| height == BOARD_HEIGHT)
+        /*matches!(self.check_winner(), Some(_))
+        | */
+        self.columns_height
+            .iter()
+            .all(|&height| height == BOARD_HEIGHT)
     }
 
     pub fn play(&mut self, column: usize) {
@@ -295,9 +295,12 @@ impl fmt::Display for Connect4 {
             }
             board_vec.push('\n')
         }
-
+        for column_number in 0..(BOARD_WIDTH) {
+            board_vec.push(' ');
+            board_vec.push(char::from_digit(column_number as u32, 36).unwrap());
+            board_vec.push(' ');
+        }
         let board_print: String = board_vec.iter().collect();
-
         write!(f, "{}", board_print)
     }
 }
