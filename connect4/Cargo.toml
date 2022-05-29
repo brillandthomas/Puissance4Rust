@@ -5,11 +5,11 @@ edition = "2021"
 
 
 [[bin]]
-name = "Connect4"
+name = "connect4"
 path = "src/client/main.rs"
 
 [[bin]]
-name = "Connect4Server"
+name = "connect4_server"
 path = "src/server/main.rs"
 
 

@@ -38,7 +38,7 @@ fn game_over<'a>(game: &Connect4, player_1: &'a mut TcpStream, player_2: &'a mut
 
 fn play_game(mut player_1: TcpStream, mut player_2: TcpStream) {
     Hello(Red).send_to(&mut player_1);
-    Hello(Red).send_to(&mut player_2);
+    Hello(Yellow).send_to(&mut player_2);
     let mut game = Connect4::new();
     while !game.over() {
         play_turn(&mut game, &mut player_1, &mut player_2)

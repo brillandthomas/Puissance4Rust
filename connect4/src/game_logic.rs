@@ -23,6 +23,7 @@ impl Player {
     }
 
     pub fn select<T>(self, player_1: T, player_2: T) -> (T, T) {
+        use Player::*;
         match self {
             Red => (player_1, player_2),
             Yellow => (player_2, player_1),
@@ -35,15 +36,6 @@ pub enum Cell {
     Empty,
     Red,
     Yellow,
-}
-
-impl Cell {
-    fn is_empty(self) -> bool {
-        match self {
-            Cell::Empty => true,
-            _ => false,
-        }
-    }
 }
 
 impl Into<Cell> for Player {
