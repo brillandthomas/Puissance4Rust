@@ -20,6 +20,13 @@ impl Player {
             Yellow => Red,
         }
     }
+
+    pub fn select<T>(self, player_1: T, player_2: T) -> (T, T) {
+        match self {
+            Red => (player_1, player_2),
+            Yellow => (player_2, player_1),
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -61,7 +68,7 @@ impl Into<char> for Cell {
 pub struct Connect4 {
     board: [Cell; BOARD_WIDTH * BOARD_HEIGHT],
     columns_height: [usize; BOARD_WIDTH],
-    to_play: Player,
+    pub to_play: Player,
     last_move: (usize, usize),
     played_moves: Vec<usize>,
 }
