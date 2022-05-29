@@ -4,7 +4,7 @@ const BOARD_WIDTH: usize = 7;
 const BOARD_HEIGHT: usize = 6;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-enum Player {
+pub enum Player {
     Red,
     Yellow,
 }
@@ -17,10 +17,17 @@ impl Player {
             Yellow => Red,
         }
     }
+
+    pub fn select<T>(self, player_1: T, player_2: T) -> (T, T) {
+        match self {
+            Red => (player_1, player_2),
+            Yellow => (player_2, player_1),
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-enum Cell {
+pub enum Cell {
     Empty,
     Red,
     Yellow,
@@ -36,10 +43,10 @@ impl Into<Cell> for Player {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-struct Connect4 {
+pub struct Connect4 {
     board: [Cell; BOARD_WIDTH * BOARD_HEIGHT],
     columns_height: [usize; BOARD_WIDTH],
-    to_play: Player,
+    pub to_play: Player,
 }
 
 impl Connect4 {
@@ -58,12 +65,28 @@ impl Connect4 {
         }
     }
 
-    fn check_winner(&self) -> Option<bool> {
+    pub fn has_winner(&self) -> Option<Player> {
         None
     }
 
-    fn valid_action(&self, column: usize) -> bool {
+    pub fn new() -> Self {
+        Connect4 {
+            board: [Cell::Empty; BOARD_HEIGHT * BOARD_WIDTH],
+            columns_height: [0; BOARD_WIDTH],
+            to_play: Player::Red,
+        }
+    }
+
+    pub fn over(&self) -> bool {
+        false
+    }
+
+    pub fn valid_action(&self, column: usize) -> bool {
         self.columns_height[column] < BOARD_HEIGHT
+    }
+
+    pub fn play(&mut self, _column: usize) {
+        self[(0, 0)] = self.to_play.into()
     }
 }
 
