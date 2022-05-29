@@ -164,9 +164,24 @@ impl Connect4 {
         let yellow_string: String = yellow_moves.iter().collect();
         let red_string: String = red_moves.iter().collect();
 
+        let mut result_string : String = String::from("Not finished");
+
+        if self.over() {
+            let winner : Option<Player> = self.check_winner();
+            if winner == None {
+                result_string = String::from("Draw");
+            }
+            else if winner == Some(Player::Red) {
+                result_string = format!("Winner : {} ", yellow_player);
+            }
+            else {
+                result_string = format!("Winner : {}", red_player);
+            }
+        }
+
         let total_string: String = format!(
-            "{} moves (X): {} \n{} moves (O): {}\n\nFinal board :\n{}",
-            red_player, red_string, yellow_player, yellow_string, &self
+            "{0} moves (X): {1} \n{2} moves (O): {3}\n{4}\n\nFinal board :\n{5}",
+            red_player, red_string, yellow_player, yellow_string, result_string, &self
         );
 
         fs::write("output.txt", total_string).expect("Unable to write data");
