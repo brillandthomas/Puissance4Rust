@@ -27,8 +27,8 @@ fn cli() -> Command<'static> {
         )
         .after_help(
             "The main thread handles connections. As soon as two players are in the queue, \
-            the game starts on a dedicated thread. The state of the game is maintained on the \
-            server side, not on the client side.",
+            the game starts on a dedicated thread. Several games can be played simultaneously. \
+            The state of the game is maintained on the server side, not on the client side.",
         )
 }
 
