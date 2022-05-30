@@ -51,7 +51,10 @@ impl MinMax {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 struct AlphaBeta(i32, i32);
 
+type SharedAlphaBeta = Arc<Mutex<AlphaBeta>>;
+
 impl AlphaBeta {
+    #[inline]
     fn update(&mut self, value: i32, min_max: MinMax) -> bool {
         match min_max {
             Min => {
@@ -97,11 +100,11 @@ fn evaluate(game: Connect4) -> i32 {
 fn alpha_beta_search(
     game: Connect4,
     depth: usize,
-    mut alpha_beta: AlphaBeta,
+    alpha_beta: SharedAlphaBeta,
     min_max: MinMax,
 ) -> i32 {
     if let Some(_) = game.check_winner() {
-        return -min_max.default_value();
+        return min_max.default_value();
     }
     if game.check_full() {
         return 0;
@@ -114,8 +117,10 @@ fn alpha_beta_search(
         if game.valid_action(action) {
             let mut game = game.clone();
             game.play(action);
-            let score = alpha_beta_search(game, depth - 1, alpha_beta, min_max.other());
+            let score =
+                alpha_beta_search(game, depth - 1, Arc::clone(&alpha_beta), min_max.other());
             if min_max.compare(best, score) {
+                let mut alpha_beta = alpha_beta.lock().unwrap();
                 if alpha_beta.update(score, min_max) {
                     return score;
                 }
@@ -131,17 +136,19 @@ pub fn ai_action(game: Connect4, depth: usize) -> usize {
     let alpha_beta = AlphaBeta(-i32::MAX, i32::MAX);
     let alpha_beta = Arc::new(Mutex::new(alpha_beta));
     let mut handles = Vec::with_capacity(BOARD_WIDTH);
-
     for action in 0..BOARD_WIDTH {
-        let alpha_beta = Arc::clone(&alpha_beta);
-        let handle = thread::spawn(move || {
-            alpha_beta;
-        });
-        handles.push(handle);
+        if game.valid_action(action) {
+            let mut game = game.clone();
+            game.play(action);
+            let alpha_beta = Arc::clone(&alpha_beta);
+            let handle = thread::spawn(move || alpha_beta_search(game, depth - 1, alpha_beta, Min));
+            handles.push((handle, action));
+        }
     }
-
-    for handle in handles {
-        handle.join().unwrap();
-    }
-    42
+    handles
+        .into_iter()
+        .map(|(handle, action)| (handle.join().unwrap(), action))
+        .max()
+        .unwrap()
+        .1
 }
