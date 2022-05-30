@@ -4,13 +4,16 @@ use crate::{
 };
 use std::{io, net::TcpStream};
 
-pub fn run(socket_address: (String, u16)) {
+pub fn run(socket_address: (String, u16), replay_file: Option<String>) {
     let mut server = TcpStream::connect(socket_address).unwrap();
     let color = match Message::receive_from(&mut server) {
         Hello(color) => color,
         message => panic!("Unexpected message: {:?}", message),
     };
-    play_game(server, color);
+    let (game, game_history) = play_game(server, color);
+    if let Some(filename) = replay_file {
+        game.save(filename, game_history);
+    }
 }
 
 fn game_over(result: Message) {
@@ -38,7 +41,7 @@ fn input_action(server: &mut TcpStream) {
     }
 }
 
-fn play_game(mut server: TcpStream, color: Player) {
+fn play_game(mut server: TcpStream, color: Player) -> (Connect4, Vec<u8>) {
     let mut game = Connect4::new();
     println!(
         "You are playing with {} (symbol: {}).\n Columns are numbered from 0 to {} inclusive, \
@@ -48,16 +51,16 @@ fn play_game(mut server: TcpStream, color: Player) {
         game_logic::BOARD_WIDTH - 1,
         game,
     );
-
+    let mut game_history = Vec::new();
     loop {
         match Message::receive_from(&mut server) {
             Play => input_action(&mut server),
             InvalidAction => {
                 println!("\nInvalid action.");
-                input_action(&mut server);
             }
             ValidAction(action) => {
                 game.play(action as usize);
+                game_history.push(action);
                 println!(
                     "\n{}\n\nA token has been placed in column {}.\n",
                     game, action
@@ -65,7 +68,7 @@ fn play_game(mut server: TcpStream, color: Player) {
             }
             result @ (Lose | Draw | Win) => {
                 game_over(result);
-                break;
+                return (game, game_history);
             }
             message => panic!("Unexpected message: {:?}", message),
         };

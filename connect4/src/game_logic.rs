@@ -143,43 +143,42 @@ impl Connect4 {
         self.play(possible_moves[chosen_index]);
     }
 
-    pub fn save_moves(&self, red_player: String, yellow_player: String, file_name: String) -> () {
+    pub fn save(&self, filename: String, history: Vec<u8>) -> () {
         let mut red_moves: Vec<char> = Vec::new();
         let mut yellow_moves: Vec<char> = Vec::new();
 
-        for ind in 0..self.played_moves.len() {
-            let c = char::from_digit(self.played_moves[ind] as u32, 10).unwrap();
-            if ind % 2 == 0 {
-                red_moves.push(c);
-                red_moves.push(';');
+        for (num_action, &action) in history.iter().enumerate() {
+            let action = char::from_digit(action as u32, 10).unwrap();
+            let buffer = if num_action % 2 == 0 {
+                &mut red_moves
             } else {
-                yellow_moves.push(c);
-                yellow_moves.push(';')
-            }
+                &mut yellow_moves
+            };
+            buffer.push(action);
+            buffer.push(';');
         }
 
         let yellow_string: String = yellow_moves.iter().collect();
         let red_string: String = red_moves.iter().collect();
-
-        let mut result_string: String = String::from("Not finished");
-
-        if self.over() {
-            let winner = self.check_winner();
-            if winner == Some(Player::Yellow) {
-                result_string = format!("Winner : {} ", yellow_player);
-            } else if winner == Some(Player::Red) {
-                result_string = format!("Winner : {}", red_player);
+        let result_string = if self.over() {
+            if let Some(winner) = self.check_winner() {
+                format!("Winner : {}", winner)
             } else {
-                result_string = String::from("Draw");
+                String::from("Draw")
             }
-        }
-
+        } else {
+            String::from("Not finished")
+        };
         let total_string: String = format!(
-            "{0} moves (X): {1} \n{2} moves (O): {3}\n{4}\n\nFinal board :\n{5}",
-            red_player, red_string, yellow_player, yellow_string, result_string, &self
+            "Red moves ({}): {} \nYellow moves ({}): {}\n{}\n\nFinal board :\n{}",
+            char::from(Player::Red),
+            red_string,
+            char::from(Player::Yellow),
+            yellow_string,
+            result_string,
+            self
         );
-
-        fs::write(file_name, total_string).expect("Unable to write data");
+        fs::write(filename, total_string).expect("Unable to write data.");
     }
 
     pub fn valid_action(&self, column: usize) -> bool {
