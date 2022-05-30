@@ -1,4 +1,3 @@
-
 use game_logic;
 
 pub fn chose_move_AI(connect4_game: game_logic::Connect4) -> usize {
