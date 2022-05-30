@@ -1,11 +1,17 @@
 use rand::Rng;
 use std::{
-    char, fmt, fs,
+    char, cmp, fmt, fs,
     ops::{Index, IndexMut},
 };
 
-pub const BOARD_WIDTH: usize = 7;
 pub const BOARD_HEIGHT: usize = 6;
+pub const BOARD_WIDTH: usize = 7;
+pub const ALIGN_TARGET: i32 = 4;
+const MAX_CHECK_LEN: usize = if BOARD_HEIGHT > BOARD_WIDTH {
+    BOARD_HEIGHT
+} else {
+    BOARD_WIDTH
+};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Player {
@@ -54,6 +60,8 @@ pub enum Cell {
     Yellow,
 }
 
+type CheckSlice = [Cell; MAX_CHECK_LEN];
+
 impl From<Player> for Cell {
     fn from(player: Player) -> Self {
         match player {
@@ -84,40 +92,21 @@ pub struct Connect4 {
 
 impl Connect4 {
     pub fn check_winner(&self) -> Option<Player> {
-        let other_player: Player = self.to_play.other();
-        let (row, column): (usize, usize) = self.last_move;
-
-        let row_list = self.get_row(row);
-        let row_winner = self.check_winner_list(other_player, row_list);
-        if row_winner {
-            return Some(other_player);
+        let player = self.to_play.other();
+        let pos = self.last_move;
+        let winner = [(1, 0), (0, 1), (1, 1), (1, -1)]
+            .iter()
+            .map(|&direction| self.sub_board(pos, direction))
+            .any(|check_slice| Self::check_winner_list(player, check_slice));
+        if winner {
+            Some(player)
+        } else {
+            None
         }
-
-        let column_list = self.get_column(column);
-        let column_winner = self.check_winner_list(other_player, column_list);
-        if column_winner {
-            return Some(other_player);
-        }
-
-        let ascending_diagonal_list = self.get_ascending_diagonal((row, column));
-        let ascending_diagonal_winner =
-            self.check_winner_list(other_player, ascending_diagonal_list);
-        if ascending_diagonal_winner {
-            return Some(other_player);
-        }
-
-        let descending_diagonal_list = self.get_descending_diagonal((row, column));
-        let descending_diagonal_winner =
-            self.check_winner_list(other_player, descending_diagonal_list);
-        if descending_diagonal_winner {
-            return Some(other_player);
-        }
-
-        None
     }
 
     pub fn new() -> Self {
-        Connect4 {
+        Self {
             board: [Cell::Empty; BOARD_HEIGHT * BOARD_WIDTH],
             columns_height: [0; BOARD_WIDTH],
             to_play: Player::Red,
@@ -212,13 +201,13 @@ impl Connect4 {
         }
     }
 
-    fn check_winner_list(&self, player: Player, list: [Cell; BOARD_WIDTH]) -> bool {
+    fn check_winner_list(player: Player, list: CheckSlice) -> bool {
         let mut count = 0;
-        let player: Cell = player.into();
-        for played in list.iter() {
-            if played == &player {
-                count = count + 1;
-                if count == 4 {
+        let player = Cell::from(player);
+        for &played in list.iter() {
+            if played == player {
+                count += 1;
+                if count == ALIGN_TARGET {
                     return true;
                 }
             } else {
@@ -228,54 +217,36 @@ impl Connect4 {
         false
     }
 
-    fn get_ascending_diagonal(&self, (row, column): (usize, usize)) -> [Cell; BOARD_WIDTH] {
-        let mut diagonal_output = [Cell::Empty; BOARD_WIDTH];
-        let mut i = row;
-        let mut j = column;
-        let mut ind = 0;
-        while (i > 0) & (j > 0) {
-            i = i - 1;
-            j = j - 1;
+    fn compute_indices((row, column): (i32, i32), (dx, dy): (i32, i32)) -> (usize, i32, i32) {
+        match (dx, dy) {
+            (1, 0) => (BOARD_WIDTH, row, 0),
+            (0, 1) => (BOARD_HEIGHT, 0, column),
+            _ => {
+                let (pos_row, neg_row) = if dy == 1 {
+                    (row, BOARD_HEIGHT as i32 - 1 - row)
+                } else {
+                    (BOARD_HEIGHT as i32 - 1 - row, row)
+                };
+                let mini = cmp::min(pos_row, column);
+                let maxi = cmp::min(neg_row, BOARD_WIDTH as i32 - 1 - column);
+                (
+                    1 + (mini + maxi) as usize,
+                    row as i32 - dy * mini as i32,
+                    (column - mini) as i32,
+                )
+            }
         }
-        while (i < BOARD_HEIGHT) & (j < BOARD_WIDTH) {
-            diagonal_output[ind] = self[(i, j)];
-            ind = ind + 1;
-            i = i + 1;
-            j = j + 1;
-        }
-        diagonal_output
     }
 
-    fn get_column(&self, column: usize) -> [Cell; BOARD_WIDTH] {
-        let mut column_output = [Cell::Empty; BOARD_WIDTH];
-        for x in 0..BOARD_HEIGHT {
-            column_output[x] = self[(x, column)];
+    fn sub_board(&self, (row, column): (usize, usize), (dx, dy): (i32, i32)) -> CheckSlice {
+        let (len, mut i, mut j) = Self::compute_indices((row as i32, column as i32), (dx, dy));
+        let mut check_slice = [Cell::Empty; MAX_CHECK_LEN];
+        for ind in 0..len {
+            check_slice[ind] = self[(i as usize, j as usize)];
+            i += dy;
+            j += dx;
         }
-        column_output
-    }
-
-    fn get_descending_diagonal(&self, (row, column): (usize, usize)) -> [Cell; BOARD_WIDTH] {
-        let mut diagonal_output = [Cell::Empty; BOARD_WIDTH];
-        let mut i = row;
-        let mut j = column;
-        let mut ind = 0;
-        while (i > 0) & (j < BOARD_WIDTH - 1) {
-            i = i - 1;
-            j = j + 1;
-        }
-        while (i < BOARD_HEIGHT) & (j > 0) {
-            diagonal_output[ind] = self[(i, j)];
-            ind = ind + 1;
-            i = i + 1;
-            j = j - 1;
-        }
-        diagonal_output
-    }
-
-    fn get_row(&self, row: usize) -> [Cell; BOARD_WIDTH] {
-        self.board[BOARD_WIDTH * row..BOARD_WIDTH * (row + 1)]
-            .try_into()
-            .unwrap()
+        check_slice
     }
 }
 
