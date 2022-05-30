@@ -7,6 +7,7 @@ use std::{
     thread,
 };
 
+// Run the server
 pub fn run(socket_address: (String, u16)) {
     let listener = TcpListener::bind(socket_address).unwrap();
     let mut queue = None;
@@ -25,6 +26,7 @@ pub fn run(socket_address: (String, u16)) {
     }
 }
 
+// Send the game over messages to the clients
 fn game_over<'a>(game: &Connect4, player_1: &'a mut TcpStream, player_2: &'a mut TcpStream) {
     if let Some(winner) = game.check_winner() {
         let (winner, loser) = winner.select(player_1, player_2);
@@ -36,6 +38,7 @@ fn game_over<'a>(game: &Connect4, player_1: &'a mut TcpStream, player_2: &'a mut
     }
 }
 
+// Play the game in the server
 fn play_game(mut player_1: TcpStream, mut player_2: TcpStream) {
     Hello(Red).send_to(&mut player_1);
     Hello(Yellow).send_to(&mut player_2);
@@ -46,6 +49,7 @@ fn play_game(mut player_1: TcpStream, mut player_2: TcpStream) {
     game_over(&game, &mut player_1, &mut player_2)
 }
 
+// Play a turn : ask for input to the player, send the received input to both players
 fn play_turn(game: &mut Connect4, player_1: &mut TcpStream, player_2: &mut TcpStream) {
     let (player, other) = game.to_play.select(player_1, player_2);
     Play.send_to(player);

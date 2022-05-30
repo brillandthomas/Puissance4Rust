@@ -4,6 +4,7 @@ use std::{
     ops::{Index, IndexMut},
 };
 
+//Size of the Connect4 board
 pub const BOARD_HEIGHT: usize = 6;
 pub const BOARD_WIDTH: usize = 7;
 pub const ALIGN_TARGET: i32 = 4;
@@ -13,6 +14,7 @@ const MAX_CHECK_LEN: usize = if BOARD_HEIGHT > BOARD_WIDTH {
     BOARD_WIDTH
 };
 
+// Player enumeration and helpful functions
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Player {
     Red,
@@ -21,6 +23,7 @@ pub enum Player {
 
 impl Player {
     pub fn other(self) -> Self {
+        // Returns the other player
         use Player::*;
         match self {
             Red => Yellow,
@@ -53,6 +56,7 @@ impl fmt::Display for Player {
     }
 }
 
+// Enumeration for each cell, empty / red / yellow
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Cell {
     Empty,
@@ -62,6 +66,7 @@ pub enum Cell {
 
 type CheckSlice = [Cell; MAX_CHECK_LEN];
 
+// Get cell from player
 impl From<Player> for Cell {
     fn from(player: Player) -> Self {
         match player {
@@ -71,6 +76,7 @@ impl From<Player> for Cell {
     }
 }
 
+// Get character from cell
 impl From<Cell> for char {
     fn from(cell: Cell) -> Self {
         match cell {
@@ -81,22 +87,25 @@ impl From<Cell> for char {
     }
 }
 
+// Implementation of the connect4 game
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Connect4 {
-    pub board: [Cell; BOARD_WIDTH * BOARD_HEIGHT],
-    columns_height: [usize; BOARD_WIDTH],
-    pub to_play: Player,
-    last_move: (usize, usize),
-    played_moves: Vec<usize>,
+    pub board: [Cell; BOARD_WIDTH * BOARD_HEIGHT], // board from bottom to top
+    columns_height: [usize; BOARD_WIDTH], //for each column, number of nonempty cells
+    pub to_play: Player, // player that has to play next turn
+    last_move: (usize, usize), // last move that was played
+    played_moves: Vec<usize>, // list of the played moves
 }
 
 impl Connect4 {
+    // check if the board is fully completed
     pub fn check_full(&self) -> bool {
         self.columns_height
             .iter()
             .all(|&height| height == BOARD_HEIGHT)
     }
 
+    // check if last move was a winning move
     pub fn check_winner(&self) -> Option<Player> {
         let player = self.to_play.other();
         let pos = self.last_move;
@@ -111,6 +120,7 @@ impl Connect4 {
         }
     }
 
+    // Create an empty board to initialize a game
     pub fn new() -> Self {
         Self {
             board: [Cell::Empty; BOARD_HEIGHT * BOARD_WIDTH],
@@ -121,10 +131,12 @@ impl Connect4 {
         }
     }
 
+    // Check if the game is over (draw, full or win)
     pub fn over(&self) -> bool {
         matches!(self.check_winner(), Some(_)) | self.check_full()
     }
 
+    // Play a move in the column input (consider that the column is valid)
     pub fn play(&mut self, column: usize) {
         let row_move = self.columns_height[column];
         self[(row_move, column)] = self.to_play.into();
@@ -134,6 +146,7 @@ impl Connect4 {
         self.played_moves.push(column);
     }
 
+    // Play a random possible move
     pub fn play_random_move(&mut self) -> () {
         let mut possible_moves: Vec<usize> = Vec::new();
         for column in 0..BOARD_WIDTH {
@@ -145,10 +158,13 @@ impl Connect4 {
         self.play(possible_moves[chosen_index]);
     }
 
+    // Save a file for a recap of the game
     pub fn save(&self, filename: String, history: Vec<u8>) -> () {
+        // Played moves list for each player
         let mut red_moves: Vec<char> = Vec::new();
         let mut yellow_moves: Vec<char> = Vec::new();
-
+    
+        // Fill the moves list for each player
         for (num_action, &action) in history.iter().enumerate() {
             let action = char::from_digit(action as u32, 10).unwrap();
             let buffer = if num_action % 2 == 0 {
@@ -160,6 +176,7 @@ impl Connect4 {
             buffer.push(';');
         }
 
+        // Convert the list of moves into a string
         let yellow_string: String = yellow_moves.iter().collect();
         let red_string: String = red_moves.iter().collect();
         let result_string = if self.over() {
@@ -171,6 +188,7 @@ impl Connect4 {
         } else {
             String::from("Not finished")
         };
+        // Final string we will save in a file.
         let total_string: String = format!(
             "Red moves ({}): {} \nYellow moves ({}): {}\n{}\n\nFinal board :\n{}",
             char::from(Player::Red),
@@ -183,10 +201,12 @@ impl Connect4 {
         fs::write(filename, total_string).expect("Unable to write data.");
     }
 
+    // Verify if an action is valid (column in the board + the column is not full)
     pub fn valid_action(&self, column: usize) -> bool {
         (column < BOARD_WIDTH) & (self.columns_height[column] < BOARD_HEIGHT)
     }
 
+    // Check if the coordinates are inside the board
     fn check_coordinates(row: usize, column: usize) {
         if row >= BOARD_HEIGHT {
             panic!(
@@ -202,6 +222,7 @@ impl Connect4 {
         }
     }
 
+    // Verify if there is 4 Cells aligned in a list
     fn check_winner_list(player: Player, list: CheckSlice) -> bool {
         let mut count = 0;
         let player = Cell::from(player);
@@ -218,6 +239,7 @@ impl Connect4 {
         false
     }
 
+    // Get the slices for the row, the column or the diagonals for the last move
     fn compute_indices((row, column): (i32, i32), (dx, dy): (i32, i32)) -> (usize, i32, i32) {
         match (dx, dy) {
             (1, 0) => (BOARD_WIDTH, row, 0),
@@ -239,6 +261,7 @@ impl Connect4 {
         }
     }
 
+    // Get the vector
     fn sub_board(&self, (row, column): (usize, usize), (dx, dy): (i32, i32)) -> CheckSlice {
         let (len, mut i, mut j) = Self::compute_indices((row as i32, column as i32), (dx, dy));
         let mut check_slice = [Cell::Empty; MAX_CHECK_LEN];
@@ -251,6 +274,7 @@ impl Connect4 {
     }
 }
 
+// Index for Connect4 board using directly the row and column numbers
 impl Index<(usize, usize)> for Connect4 {
     type Output = Cell;
 
@@ -269,6 +293,7 @@ impl IndexMut<(usize, usize)> for Connect4 {
     }
 }
 
+// Display the connect4 board
 impl fmt::Display for Connect4 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut board_vec: Vec<char> = Vec::new();

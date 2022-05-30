@@ -6,6 +6,7 @@ use std::{
 
 const MAX_MESSAGE_SIZE: usize = 1_024;
 
+// Message enumeration to communicate between the client and the server
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Message {
     Hello(Player),

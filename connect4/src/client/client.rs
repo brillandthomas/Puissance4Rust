@@ -4,6 +4,7 @@ use crate::{
 };
 use std::{io, net::TcpStream};
 
+// Run the client
 pub fn run(socket_address: (String, u16), replay_file: Option<String>) {
     let mut server = TcpStream::connect(socket_address).unwrap();
     let color = match Message::receive_from(&mut server) {
@@ -16,6 +17,7 @@ pub fn run(socket_address: (String, u16), replay_file: Option<String>) {
     }
 }
 
+// Send the game over message
 fn game_over(result: Message) {
     match result {
         Lose => println!("You lost the game."),
@@ -25,6 +27,7 @@ fn game_over(result: Message) {
     }
 }
 
+// Get the input from the player in the client
 fn input_action(server: &mut TcpStream) {
     loop {
         println!("\nPlease input your move:");
@@ -41,6 +44,7 @@ fn input_action(server: &mut TcpStream) {
     }
 }
 
+// Function for playing the game using the server
 fn play_game(mut server: TcpStream, color: Player) -> (Connect4, Vec<u8>) {
     let mut game = Connect4::new();
     println!(

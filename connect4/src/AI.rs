@@ -4,11 +4,13 @@ use std::{
     thread,
 };
 
+// Score values for each cell
 const VALUES: [i32; BOARD_WIDTH * BOARD_HEIGHT] = [
     3, 6, 10, 15, 10, 6, 3, 4, 7, 12, 17, 12, 7, 4, 5, 8, 15, 22, 15, 8, 5, 4, 8, 14, 19, 14, 8, 4,
     3, 7, 11, 16, 11, 7, 3, 2, 5, 9, 12, 9, 5, 2,
 ];
 
+// Priority moves in order, from the center to the sides
 const PRIORITY_MOVES: [usize; BOARD_WIDTH] = [3, 2, 4, 1, 5, 0, 6];
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -45,6 +47,7 @@ impl MinMax {
     }
 }
 
+// Alpha beta implementation
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 struct AlphaBeta(i32, i32);
 
@@ -75,6 +78,7 @@ impl AlphaBeta {
     }
 }
 
+// Evaluate a board using the VALUES
 #[inline]
 fn evaluate(game: Connect4) -> i32 {
     let player = Cell::from(game.to_play.other());
@@ -89,6 +93,7 @@ fn evaluate(game: Connect4) -> i32 {
     score
 }
 
+// Search for the best move using alpha beta (recursive)
 fn alpha_beta_search(
     game: Connect4,
     depth: usize,
@@ -121,6 +126,7 @@ fn alpha_beta_search(
     best
 }
 
+// Using the alpha beta algorithm, chose the best move
 pub fn ai_action(game: Connect4, depth: usize) -> usize {
     let alpha_beta = AlphaBeta(-i32::MAX, i32::MAX);
     let alpha_beta = Arc::new(Mutex::new(alpha_beta));
