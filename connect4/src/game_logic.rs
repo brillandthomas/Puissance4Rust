@@ -23,9 +23,26 @@ impl Player {
     }
 
     pub fn select<T>(self, player_1: T, player_2: T) -> (T, T) {
+        use Player::*;
         match self {
             Red => (player_1, player_2),
             Yellow => (player_2, player_1),
+        }
+    }
+}
+
+impl From<Player> for char {
+    fn from(player: Player) -> Self {
+        Cell::from(player).into()
+    }
+}
+
+impl fmt::Display for Player {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Player::*;
+        match self {
+            Red => write!(f, "red"),
+            Yellow => write!(f, "yellow"),
         }
     }
 }
@@ -37,27 +54,18 @@ pub enum Cell {
     Yellow,
 }
 
-impl Cell {
-    fn is_empty(self) -> bool {
-        match self {
-            Cell::Empty => true,
-            _ => false,
-        }
-    }
-}
-
-impl Into<Cell> for Player {
-    fn into(self) -> Cell {
-        match self {
+impl From<Player> for Cell {
+    fn from(player: Player) -> Self {
+        match player {
             Player::Red => Cell::Red,
             Player::Yellow => Cell::Yellow,
         }
     }
 }
 
-impl Into<char> for Cell {
-    fn into(self) -> char {
-        match self {
+impl From<Cell> for char {
+    fn from(cell: Cell) -> Self {
+        match cell {
             Cell::Empty => ' ',
             Cell::Red => 'X',
             Cell::Yellow => 'O',
@@ -113,7 +121,7 @@ impl Connect4 {
             board: [Cell::Empty; BOARD_HEIGHT * BOARD_WIDTH],
             columns_height: [0; BOARD_WIDTH],
             to_play: Player::Red,
-            last_move: (10, 10),
+            last_move: (0, 0),
             played_moves: Vec::new(),
         }
     }
@@ -302,9 +310,12 @@ impl fmt::Display for Connect4 {
             }
             board_vec.push('\n')
         }
-
+        for column_number in 0..(BOARD_WIDTH) {
+            board_vec.push(' ');
+            board_vec.push(char::from_digit(column_number as u32, 36).unwrap());
+            board_vec.push(' ');
+        }
         let board_print: String = board_vec.iter().collect();
-
         write!(f, "{}", board_print)
     }
 }
