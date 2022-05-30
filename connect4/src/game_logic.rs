@@ -194,7 +194,7 @@ impl Connect4 {
         if column >= BOARD_WIDTH {
             panic!(
                 "column out of bounds: the width is {} but the column is {}",
-                BOARD_WIDTH, row
+                BOARD_WIDTH, column
             );
         }
     }
@@ -246,7 +246,7 @@ impl Connect4 {
         let mut i = row;
         let mut j = column;
         let mut ind = 0;
-        while (i > 0) & (j < BOARD_WIDTH) {
+        while (i > 0) & (j < BOARD_WIDTH - 1) {
             i = i - 1;
             j = j + 1;
         }
