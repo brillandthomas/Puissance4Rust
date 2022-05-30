@@ -91,10 +91,9 @@ impl From<Cell> for char {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Connect4 {
     pub board: [Cell; BOARD_WIDTH * BOARD_HEIGHT], // board from bottom to top
-    columns_height: [usize; BOARD_WIDTH], //for each column, number of nonempty cells
-    pub to_play: Player, // player that has to play next turn
-    last_move: (usize, usize), // last move that was played
-    played_moves: Vec<usize>, // list of the played moves
+    columns_height: [usize; BOARD_WIDTH],          //for each column, number of nonempty cells
+    pub to_play: Player,                           // player that has to play next turn
+    last_move: (usize, usize),                     // last move that was played
 }
 
 impl Connect4 {
@@ -127,7 +126,6 @@ impl Connect4 {
             columns_height: [0; BOARD_WIDTH],
             to_play: Player::Red,
             last_move: (0, 0),
-            played_moves: Vec::new(),
         }
     }
 
@@ -143,7 +141,6 @@ impl Connect4 {
         self.to_play = self.to_play.other();
         self.columns_height[column] += 1;
         self.last_move = (row_move, column);
-        self.played_moves.push(column);
     }
 
     // Play a random possible move
@@ -163,7 +160,7 @@ impl Connect4 {
         // Played moves list for each player
         let mut red_moves: Vec<char> = Vec::new();
         let mut yellow_moves: Vec<char> = Vec::new();
-    
+
         // Fill the moves list for each player
         for (num_action, &action) in history.iter().enumerate() {
             let action = char::from_digit(action as u32, 10).unwrap();

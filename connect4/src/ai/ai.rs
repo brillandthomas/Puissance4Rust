@@ -47,7 +47,7 @@ impl MinMax {
     }
 }
 
-// Alpha beta implementation
+// wrapper for (alpha, beta)
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 struct AlphaBeta(i32, i32);
 
@@ -81,22 +81,29 @@ impl AlphaBeta {
     }
 }
 
-// Evaluate a board using the VALUES
-#[inline]
-fn evaluate(game: Connect4) -> i32 {
-    let player = Cell::from(game.to_play.other());
-    let mut score = 0;
-    for (&val, &cell) in VALUES.iter().zip(game.board.iter()) {
-        if cell == player {
-            score += val;
-        } else {
-            score -= val;
+// chose the best move with a multi-threaded minimax algorithm with alpha-beta pruning
+pub fn ai_action(game: Connect4, depth: usize) -> usize {
+    let alpha_beta = AlphaBeta(-i32::MAX, i32::MAX);
+    let alpha_beta = Arc::new(Mutex::new(alpha_beta));
+    let mut handles = Vec::with_capacity(BOARD_WIDTH);
+    for action in 0..BOARD_WIDTH {
+        if game.valid_action(action) {
+            let mut game = game.clone();
+            game.play(action);
+            let alpha_beta = Arc::clone(&alpha_beta);
+            let handle = thread::spawn(move || alpha_beta_search(game, depth - 1, alpha_beta, Min));
+            handles.push((handle, action));
         }
     }
-    score
+    handles
+        .into_iter()
+        .map(|(handle, action)| (handle.join().unwrap(), action))
+        .max()
+        .unwrap()
+        .1
 }
 
-// Search for the best move using alpha beta (recursive)
+// recursive procedure for the minimax algorithm with alpha-beta pruning
 fn alpha_beta_search(
     game: Connect4,
     depth: usize,
@@ -131,24 +138,19 @@ fn alpha_beta_search(
     best
 }
 
-// Using the alpha beta algorithm, chose the best move
-pub fn ai_action(game: Connect4, depth: usize) -> usize {
-    let alpha_beta = AlphaBeta(-i32::MAX, i32::MAX);
-    let alpha_beta = Arc::new(Mutex::new(alpha_beta));
-    let mut handles = Vec::with_capacity(BOARD_WIDTH);
-    for action in 0..BOARD_WIDTH {
-        if game.valid_action(action) {
-            let mut game = game.clone();
-            game.play(action);
-            let alpha_beta = Arc::clone(&alpha_beta);
-            let handle = thread::spawn(move || alpha_beta_search(game, depth - 1, alpha_beta, Min));
-            handles.push((handle, action));
+// Evaluate a board using the VALUES. This is a simplistic evaluation function. Our aim was to
+// implement a multi-threaded minimax algorithm with alpha-beta pruning, not to make a
+// high-performance ai.
+#[inline]
+fn evaluate(game: Connect4) -> i32 {
+    let player = Cell::from(game.to_play.other());
+    let mut score = 0;
+    for (&val, &cell) in VALUES.iter().zip(game.board.iter()) {
+        if cell == player {
+            score += val;
+        } else {
+            score -= val;
         }
     }
-    handles
-        .into_iter()
-        .map(|(handle, action)| (handle.join().unwrap(), action))
-        .max()
-        .unwrap()
-        .1
+    score
 }
