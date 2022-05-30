@@ -20,7 +20,12 @@ fn cli() -> Command<'static> {
                 .short('a')
                 .long("ai")
                 .takes_value(false)
-                .help("Play against an artificial intelligence on a local server"),
+                .help(
+                    "Play against an artificial intelligence on a local server. The first player \
+                    is chosen randomly. The evaluation algorithm does not take into account the \
+                    number of moves when it has found a winning strategy so it can miss a win in
+                    one move because it has found another (longer) winning strategy.",
+                ),
         )
         .arg(
             Arg::new("depth")

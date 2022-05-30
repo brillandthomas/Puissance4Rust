@@ -12,6 +12,7 @@ use std::{
     time,
 };
 
+// starts the local server, the user client and the ai client
 pub fn play_against(socket_address: (String, u16), depth: usize, save_replay: Option<String>) {
     let address = socket_address.clone();
     thread::spawn(|| server::run(address));
@@ -28,6 +29,7 @@ pub fn play_against(socket_address: (String, u16), depth: usize, save_replay: Op
     handle_2.join().unwrap();
 }
 
+// helper function for launching the clients independently of the order
 fn launch_clients<F, G, T>(client_1: F, client_2: G) -> (JoinHandle<T>, JoinHandle<T>)
 where
     T: marker::Send + 'static,
