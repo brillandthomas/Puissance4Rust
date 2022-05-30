@@ -1,5 +1,5 @@
 mod ai;
 mod client;
 
-pub use ai::ai_action as action;
-pub use client::run as run_client;
+pub use ai::{ai_action as action, DEFAULT_DEPTH};
+pub use client::play_against;

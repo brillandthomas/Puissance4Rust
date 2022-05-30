@@ -1,18 +1,10 @@
 use clap::{Arg, ArgMatches, Command};
-use connect4::{ai, client, server};
-use rand::Rng;
+use connect4::{ai, client};
 
 fn main() {
     let (socket_address, save_replay, play_ai) = parse_args();
     if let Some(depth) = play_ai {
-        server::run(socket_address.clone());
-        if rand::thread_rng().gen() {
-            client::run(socket_address.clone(), save_replay);
-            ai::run_client(socket_address, depth);
-        } else {
-            ai::run_client(socket_address.clone(), depth);
-            client::run(socket_address, save_replay);
-        }
+        ai::play_against(socket_address, depth, save_replay)
     } else {
         client::run(socket_address, save_replay);
     }
@@ -34,10 +26,12 @@ fn cli() -> Command<'static> {
             Arg::new("depth")
                 .short('d')
                 .long("depth")
-                .default_value("4")
+                .default_value(ai::DEFAULT_DEPTH)
                 .help(
                     "Depth of the search for the ai. If this argument is specified, adding the \
-                    flag ai will not have any effect.",
+                    flag ai will not have any effect. Depth 9 takes about 2 seconds when \
+                    compiling in release mode, depth 8 about 3 seconds in debug mode (default \
+                    values).",
                 ),
         )
         .arg(

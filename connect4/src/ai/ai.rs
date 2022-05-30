@@ -4,6 +4,13 @@ use std::{
     thread,
 };
 
+// Conditionnal compilation : different default depth value when compiling in debug or release mode
+#[cfg(debug_assertions)]
+pub const DEFAULT_DEPTH: &'static str = "8";
+
+#[cfg(not(debug_assertions))]
+pub const DEFAULT_DEPTH: &'static str = "9";
+
 // Score values for each cell
 const VALUES: [i32; BOARD_WIDTH * BOARD_HEIGHT] = [
     3, 6, 10, 15, 10, 6, 3, 4, 7, 12, 17, 12, 7, 4, 5, 8, 15, 22, 15, 8, 5, 4, 8, 14, 19, 14, 8, 4,
