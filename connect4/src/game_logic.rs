@@ -83,7 +83,7 @@ impl From<Cell> for char {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Connect4 {
-    board: [Cell; BOARD_WIDTH * BOARD_HEIGHT],
+    pub board: [Cell; BOARD_WIDTH * BOARD_HEIGHT],
     columns_height: [usize; BOARD_WIDTH],
     pub to_play: Player,
     last_move: (usize, usize),
@@ -91,6 +91,12 @@ pub struct Connect4 {
 }
 
 impl Connect4 {
+    pub fn check_full(&self) -> bool {
+        self.columns_height
+            .iter()
+            .all(|&height| height == BOARD_HEIGHT)
+    }
+
     pub fn check_winner(&self) -> Option<Player> {
         let player = self.to_play.other();
         let pos = self.last_move;
@@ -116,11 +122,7 @@ impl Connect4 {
     }
 
     pub fn over(&self) -> bool {
-        matches!(self.check_winner(), Some(_))
-            | self
-                .columns_height
-                .iter()
-                .all(|&height| height == BOARD_HEIGHT)
+        matches!(self.check_winner(), Some(_)) | self.check_full()
     }
 
     pub fn play(&mut self, column: usize) {
