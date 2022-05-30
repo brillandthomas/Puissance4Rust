@@ -207,7 +207,7 @@ impl Connect4 {
         if column >= BOARD_WIDTH {
             panic!(
                 "column out of bounds: the width is {} but the column is {}",
-                BOARD_WIDTH, row
+                BOARD_WIDTH, column
             );
         }
     }
