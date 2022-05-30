@@ -121,17 +121,17 @@ impl Connect4 {
             board: [Cell::Empty; BOARD_HEIGHT * BOARD_WIDTH],
             columns_height: [0; BOARD_WIDTH],
             to_play: Player::Red,
-            last_move: (10, 10),
+            last_move: (0, 0),
             played_moves: Vec::new(),
         }
     }
 
     pub fn over(&self) -> bool {
-        /*matches!(self.check_winner(), Some(_))
-        | */
-        self.columns_height
-            .iter()
-            .all(|&height| height == BOARD_HEIGHT)
+        matches!(self.check_winner(), Some(_))
+            | self
+                .columns_height
+                .iter()
+                .all(|&height| height == BOARD_HEIGHT)
     }
 
     pub fn play(&mut self, column: usize) {
